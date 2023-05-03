@@ -1,9 +1,8 @@
 const  User = require ("./model") 
+const jwt = require("jsonwebtoken")
 
 const registerUser = async (req, res) => {
     try { 
-        console.log("next called and inside controller")
-
         const user = await User.create(req.body)
         res.status(201).json({
             message: "success",
@@ -17,7 +16,6 @@ const registerUser = async (req, res) => {
 const getAllUsers = async (req, res) => {
     try {
       const users = await User.findAll();
-
       res.status(200).json({ message: "success", users: users });
     } catch (error) {
       res.status(501).json({ errorMessage: error.message, error: error });
@@ -30,7 +28,6 @@ const updateUser = async (req, res) => {
         { [req.body.updateKey]: req.body.updateValue },
         { where: { username: req.body.username } }
       );
-  
       res.status(201).json({ message: "success", updateResult: updateResult });
     } catch (error) {
       res.status(501).json({ errorMessage: error.message, error: error });
@@ -50,20 +47,32 @@ const deleteUser = async (req, res) => {
     }
   }; 
 
+
 const login = async (req, res) => {
     try {
+        if (req.authUser) {
+          res.status(200).json({
+            message: "success",
+            user: {
+              username: req.authUser.username,
+              email: req.authUser.email
+            }
+          })
+          return
+        }
+        const token = await jwt.sign({id: req.user.id}, process.env.SECRET);
         res.status(200).json({
             message: "success",
             user: {
-                username: req.body.username,
-                email: req.body.email
+                username: req.user.username,
+                email: req.user.email,
+                token: token
             }
         })
     } catch (error) {
         res.status(501).json({ errorMessage: error.message, error: error });
     }
 }
-
 
 module.exports = {
     registerUser,
